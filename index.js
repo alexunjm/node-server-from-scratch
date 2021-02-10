@@ -4,96 +4,50 @@
 
 // Dependencies
 const http = require("http");
-const https = require("https");
-const querystring = require("querystring");
-const StringDecoder = require("string_decoder").StringDecoder;
-const fs = require("fs");
+const { defaultHandler } = require("./handler");
+const _data = require("./lib/data");
 
-const defaultHandler = (req, res) => {
-  // Get the path
-  const [url, ...rest] = req.url.split("?");
-  const trimmedPath = url.replace(/^\/+|\/+$/g, "");
+(async () => {
+  await _data
+    .delete("sample", "exampleFile")
+    .then(console.log)
+    .catch(console.error);
 
-  // Get the HTTP method
-  const method = req.method.toLowerCase();
+  await _data
+    .create("sample", "exampleFile", { hola: "adios" })
+    .then(console.log)
+    .catch(console.error);
 
-  // Get the query string as an object
-  let queryStringObj = "";
-  if (rest && rest.length > 0) {
-    const [queryStr] = rest;
-    queryStringObj = querystring.parse(queryStr, null, null);
-  }
+  await _data
+    .update("sample", "exampleFile", { foos: "barua" })
+    .then(console.log)
+    .catch(console.error);
 
-  // Get the payload, if any
-  const decoder = new StringDecoder("utf-8");
-  let buffer = "";
-  req.on("data", (data) => {
-    buffer += decoder.write(data);
-  });
-  req.on("end", () => {
-    buffer += decoder.end();
-    // Send the response
-    res.end(
-      `
-      payload: ${buffer}
-      `,
-      () => {
-        console.log("sending response");
-      }
-    );
-  });
-
-  // Send the status code
-  res.setHeader("Content-Type", "application/json");
-  res.writeHead(200);
-
-  // Send the response
-  res.write(
-    `
-    path: ${trimmedPath}
-    `,
-    (error) => {
-      console.log(`error response ${error}`);
-    }
-  );
-  // Send the response
-  res.write(
-    `
-    method: ${method}
-    `,
-    (error) => {
-      console.log(`error response ${error}`);
-    }
-  );
-  // Send the response
-  res.write(
-    `
-    queryStringObj: ${JSON.stringify(
-      queryStringObj
-    )}, headers: ${JSON.stringify(req.headers)}, payload: ${buffer}
-    `,
-    (error) => {
-      console.log(`error response ${error}`);
-    }
-  );
-  // Send the response
-  res.write(
-    `
-    headers: ${JSON.stringify(req.headers)}
-    `,
-    (error) => {
-      console.log(`error response ${error}`);
-    }
-  );
-};
+  await _data
+    .read("sample", "exampleFile")
+    .then(console.log)
+    .catch(console.error);
+})()
+  .then(console.log)
+  .catch(console.error);
+/*
+ */
 
 // create a server and handle requests with string response
 const server = http.createServer(defaultHandler);
 
-// listen server on port 3000
-server.listen(3000, () => {
-  console.log("server started on port 3000");
+// set default port
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || "development";
+
+// listen server on port PORT
+server.listen(PORT, () => {
+  console.log(`server started at http://localhost:${PORT} \n ${NODE_ENV}`);
 });
+
+/* 
+const https = require("https");
+const fs = require("fs");
 
 const httpsServerOptions = {
   key: fs.readFileSync("./https/key.pem"),
@@ -107,3 +61,4 @@ const secureServer = https.createServer(httpsServerOptions, defaultHandler);
 secureServer.listen(3001, () => {
   console.log("secureServer started on port 3001");
 });
+ */
